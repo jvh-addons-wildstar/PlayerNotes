@@ -18,12 +18,26 @@ function PlayerNotes:new(o)
     self.__index = self 
     self.notes = {}
     self.settings = {}
+	-- Support the following replacement addons
+	o.strOtherAddon = nil
+	o.tSupportedAddons = { ["GroupDisplay"] = true, 	-- Carbine's addon
+						   ["BetterPartyFrames"] = true, -- Replacement for the default Carbine addon
+						   ["ContextMenuPlayer"] = true, -- Normal dependency
+						   ["Gemini:Logging-1.2"] = true, -- Normal dependency
+						 } 
 
     return o
 end
 
 function PlayerNotes:Init()
-    Apollo.RegisterAddon(self, false, "", {"Gemini:Logging-1.2", "ContextMenuPlayer", "GroupDisplay"})
+	-- Support replacement addon code
+	local tDependencies = {
+		"GroupDisplay",
+		"BetterPartyFrames",
+		"ContextMenuPlayer",
+		"Gemini:Logging-1.2",
+		}
+    Apollo.RegisterAddon(self, false, "", tDependencies)
     Apollo.RegisterSlashCommand("playernotes", "OnPlayerNotesOn", self)
 end
 
@@ -35,10 +49,19 @@ function PlayerNotes:OnLoad()
         appender = "GeminiConsole"
     })
 
+ 	-- Find out which addon we are using. There should only be one
+    -- entry left in the table.
+    for key,val in pairs(self.tSupportedAddons) do
+        if val == true then
+            self.strOtherAddon = key
+            break
+        end
+    end
+
     self.wndMain = Apollo.LoadForm("PlayerNotes.xml", "PlayerNoteForm", nil, self)
     
     self.contextMenu = Apollo.GetAddon("ContextMenuPlayer")
-    self.groupDisplay = Apollo.GetAddon("GroupFrame")
+    self.groupDisplay = Apollo.GetAddon(self.strOtherAddon)
     self.selectionBox = self.wndMain:FindChild("wndSelectionBox")
     self.wndSelected = self.wndMain:FindChild("wndSelected")
 
@@ -140,6 +163,18 @@ function PlayerNotes:OnPlayerNotesOn(sCommand, sArgs)
     if sArgs ~= nil then
         self:OpenPlayerNotes(sArgs)
     end
+end
+
+function PlayerNotes:OnDependencyError(strDep, strErr)
+    -- If we get a dependency error, remove it from the table
+    -- of valid dependencies.  We need to be left with at least
+    -- the base dependency (the Carbine provided addon) though!
+    if strDep == "GroupDisplay" or strDep == "BetterPartyFrames" then
+        self.tSupportedAddons[strDep] = nil
+        return true
+    end
+
+    return false
 end
 
 
