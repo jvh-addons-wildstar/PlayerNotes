@@ -21,11 +21,8 @@ function PlayerNotes:new(o)
 	-- Support the following replacement addons
 	o.strOtherAddon = nil
 	o.tSupportedAddons = { ["GroupDisplay"] = true, 	-- Carbine's addon
-						   ["BetterPartyFrames"] = true, -- Replacement for the default Carbine addon
-						   ["ContextMenuPlayer"] = true, -- Normal dependency
-						   ["Gemini:Logging-1.2"] = true, -- Normal dependency
+						   ["BetterPartyFrames"] = true -- Replacement for the default Carbine addon
 						 } 
-
     return o
 end
 
@@ -61,7 +58,9 @@ function PlayerNotes:OnLoad()
     self.wndMain = Apollo.LoadForm("PlayerNotes.xml", "PlayerNoteForm", nil, self)
     
     self.contextMenu = Apollo.GetAddon("ContextMenuPlayer")
-    self.groupDisplay = Apollo.GetAddon(self.strOtherAddon)
+    -- The default addon dependency is called "GroupDisplay", but needs to be referenced as "GroupFrame". WTF, Carbine?
+    --self.groupDisplay = Apollo.GetAddon(self.strOtherAddon) 
+    self.groupDisplay = Apollo.GetAddon("GroupFrame") or Apollo.GetAddon("BetterPartyFrames")
     self.selectionBox = self.wndMain:FindChild("wndSelectionBox")
     self.wndSelected = self.wndMain:FindChild("wndSelected")
 
